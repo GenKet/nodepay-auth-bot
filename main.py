@@ -4,7 +4,9 @@ import time
 import configparser
 
 
+#Создание класса
 class NodePayAPI:
+    #Инициализация класса
     def __init__(self, base_url, log_file, api_key):
         self.base_url = base_url
         self.session = requests.Session()
@@ -12,7 +14,7 @@ class NodePayAPI:
         self.api_key = api_key
         self.solve_url = "http://2captcha.com/in.php"
         self.result_url = "http://2captcha.com/res.php"
-
+    #Установка логирования
     def _setup_logger(self, log_file):
         logger = logging.getLogger("NodePayAPI")
         handler = logging.FileHandler(log_file)
@@ -21,29 +23,30 @@ class NodePayAPI:
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
         return logger
-
+    #Функция регистрации
     def register(self, email, password, username, recaptcha_token=None, referral_code=None):
         data = {
             "email": email,
             "password": password,
-            "recaptcha_token": recaptcha_token or self.solve_captcha(self.base_url + "register"),
+            "recaptcha_token": recaptcha_token or self.solve_captcha(self.base_url + "register"), #Вызов функции решении капчи
             "referral_code": referral_code,
             "username": username
         }
 
         return self._send_request("register", data)
-
+    #Функция логирования
     def login(self, email, password, recaptcha_token=None, remember_me=True):
         data = {
             "email": email,
             "password": password,
-            "recaptcha_token": recaptcha_token or self.solve_captcha(self.base_url + "login"),
+            "recaptcha_token": recaptcha_token or self.solve_captcha(self.base_url + "login"), #Вызов функции решении капчи
             "remember_me": remember_me
         }
 
         return self._send_request("login", data)
-
+    #Функция отправки запросов
     def _send_request(self, endpoint, data):
+        #Установка заголовков
         headers = {
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -65,7 +68,7 @@ class NodePayAPI:
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Request failed: {e}")
             return None
-
+    #Функция решения капчи
     def solve_captcha(self, url):
         site_key = "6LdvcaMpAAAAACOZ6vyOh-V5zyl56NwvseDsWrH_"
         data = {
@@ -89,7 +92,7 @@ class NodePayAPI:
             'id': captcha_id,
             'json': 1
         }
-
+        #Попытки решить капчу
         for _ in range(10):
             result_response = requests.get(self.result_url, params=result_data)
             result = result_response.json()
@@ -101,16 +104,16 @@ class NodePayAPI:
 
         raise Exception("Captcha solving failed")
 
-
+#Функция инициализации настроек с файла
 def load_config(file_path):
     config = configparser.ConfigParser()
     config.read(file_path)
     return config
 
-
+#Проверка условий запуска
 if __name__ == "__main__":
     config = load_config('settings.ini')
-
+    #Импорт данных с файла .ini
     email = config['auth']['email']
     password = config['auth']['password']
     username = config['auth']['username']
@@ -122,7 +125,7 @@ if __name__ == "__main__":
     log_file = config['server']['log_file']
 
     api = NodePayAPI(base_url, log_file, api_key)
-
+    #Даем выбор действий
     action = input("Выберите действие (register/login): ").strip().lower()
 
     if action == "register":
